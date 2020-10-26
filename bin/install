@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+installer() {
+  local install_type=$1
+  local version=$2
+  local install_path=$3
+
+  local tmp_download_dir
+  tmp_download_dir=$(mktemp -d -t mvnd_XXXXXXX)
+
+  if [ "version" != "${install_type}" ]; then
+    echo "The asdf-mvnd plugin only supports intalling official"
+    echo "binary releases as built by the mvnd team."
+    echo "If you want to install another version from source, see:"
+    echo "https://github.com/mvndaemon/mvnd/"
+    exit 1
+  fi
+
+  local platform
+  case "$OSTYPE" in
+    darwin*) platform="darwin" ;;
+    linux*) platform="linux" ;;
+    *) fail "Unsupported platform" ;;
+  esac
+
+  local architecture
+  case "$(uname -m)" in
+    x86_64) architecture="amd64" ;;
+    *) fail "Unsupported architecture" ;;
+  esac
+
+  # running this in a subshell
+  # we don't want to disturb current working dir
+  (
+    set -e
+
+    local zip_path="$tmp_download_dir/mvnd-${version}.zip"
+    curl -Lo "$zip_path" "$(download_url "$version" "${platform}" "${architecture}")" || fail "could not download mvnd archive"
+    unzip -q "$zip_path" || fail "failed to extract mvnd archive"
+    mv "mvnd-${version}-${platform}-${architecture}"/* "$install_path" || fail "failed to move mvnd to $install_path"
+    rm -rf "$zip_path"
+  ) || (rm -rf "$install_path"; exit 1)
+}
+
+download_url() {
+  local version=$1
+  local platform=$2
+  local architecture=$3
+  echo "https://github.com/mvndaemon/mvnd/releases/download/${version}/mvnd-${version}-${platform}-${architecture}.zip"
+}
+
+fail() {
+  echo "asdf-mvnd error: " "$@"
+  exit 1
+}
+
+installer "$ASDF_INSTALL_TYPE" "$ASDF_INSTALL_VERSION" "$ASDF_INSTALL_PATH"
