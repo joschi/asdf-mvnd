@@ -35,18 +35,29 @@ installer() {
     set -e
 
     local zip_path="$tmp_download_dir/mvnd-${version}.zip"
-    curl -Lo "$zip_path" "$(download_url "$version" "${platform}" "${architecture}")" || fail "could not download mvnd archive"
+    if curl --silent --fail -IL "$(apache_download_url "$version" "${platform}" "${architecture}")" > /dev/null ; then
+      curl -Lo "$zip_path" "$(apache_download_url "$version" "${platform}" "${architecture}")" || fail "could not download mvnd archive"
+    else
+      curl -Lo "$zip_path" "$(github_download_url "$version" "${platform}" "${architecture}")" || fail "could not download mvnd archive"
+    fi
     unzip -q "$zip_path" || fail "failed to extract mvnd archive"
     mv "mvnd-${version}-${platform}-${architecture}"/* "$install_path" || fail "failed to move mvnd to $install_path"
     rm -rf "$zip_path"
   ) || (rm -rf "$install_path"; exit 1)
 }
 
-download_url() {
+github_download_url() {
   local version=$1
   local platform=$2
   local architecture=$3
   echo "https://github.com/mvndaemon/mvnd/releases/download/${version}/mvnd-${version}-${platform}-${architecture}.zip"
+}
+
+apache_download_url() {
+  local version=$1
+  local platform=$2
+  local architecture=$3
+  echo "https://downloads.apache.org/maven/mvnd/${version}/maven-mvnd-${version}-${platform}-${architecture}.zip"
 }
 
 fail() {
