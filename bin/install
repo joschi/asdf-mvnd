@@ -26,6 +26,14 @@ installer() {
   local architecture
   case "$(uname -m)" in
     x86_64) architecture="amd64" ;;
+    arm64) 
+      # Fallback to rosetta on m1 macs
+      if [[ $platform =~ darwin.* ]]; then
+        architecture="amd64"
+        warn "Falling back to use x86_64 binary"
+      else
+        fail "Unsupported architecture"
+      fi ;;
     *) fail "Unsupported architecture" ;;
   esac
 
@@ -58,6 +66,10 @@ apache_download_url() {
   local platform=$2
   local architecture=$3
   echo "https://downloads.apache.org/maven/mvnd/${version}/maven-mvnd-${version}-${platform}-${architecture}.zip"
+}
+
+warn() {
+  echo "asdf-mvnd warning: " "$@"
 }
 
 fail() {
