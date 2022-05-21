@@ -12,7 +12,7 @@ installer() {
     echo "The asdf-mvnd plugin only supports intalling official"
     echo "binary releases as built by the mvnd team."
     echo "If you want to install another version from source, see:"
-    echo "https://github.com/mvndaemon/mvnd/"
+    echo "https://github.com/apache/maven-mvnd"
     exit 1
   fi
 
@@ -27,13 +27,14 @@ installer() {
   case "$(uname -m)" in
     x86_64) architecture="amd64" ;;
     arm64) 
-      # Fallback to rosetta on m1 macs
-      if [[ $platform =~ darwin.* ]]; then
+      # Fallback to emulation via Rosetta on M1 Macs
+      if [[ "$platform" = "darwin" ]]; then
         architecture="amd64"
         warn "Falling back to use x86_64 binary"
       else
         fail "Unsupported architecture"
-      fi ;;
+      fi
+    ;;
     *) fail "Unsupported architecture" ;;
   esac
 
