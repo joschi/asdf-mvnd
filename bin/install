@@ -12,7 +12,7 @@ installer() {
     echo "The asdf-mvnd plugin only supports intalling official"
     echo "binary releases as built by the mvnd team."
     echo "If you want to install another version from source, see:"
-    echo "https://github.com/mvndaemon/mvnd/"
+    echo "https://github.com/apache/maven-mvnd"
     exit 1
   fi
 
@@ -26,6 +26,15 @@ installer() {
   local architecture
   case "$(uname -m)" in
     x86_64) architecture="amd64" ;;
+    arm64) 
+      # Fallback to emulation via Rosetta on M1 Macs
+      if [[ "$platform" = "darwin" ]]; then
+        architecture="amd64"
+        warn "Falling back to use x86_64 binary"
+      else
+        fail "Unsupported architecture"
+      fi
+    ;;
     *) fail "Unsupported architecture" ;;
   esac
 
@@ -58,6 +67,10 @@ apache_download_url() {
   local platform=$2
   local architecture=$3
   echo "https://downloads.apache.org/maven/mvnd/${version}/maven-mvnd-${version}-${platform}-${architecture}.zip"
+}
+
+warn() {
+  echo "asdf-mvnd warning: " "$@"
 }
 
 fail() {
