@@ -39,5 +39,13 @@ jobs:
         uses: asdf-vm/actions/plugin-test@v1
         with:
           command: mvnd -v
+          # First release with different directory in ZIP archive
+          version: 0.8.1
+        env:
+          GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: asdf_plugin_test
+        uses: asdf-vm/actions/plugin-test@v1
+        with:
+          command: mvnd -v
         env:
           GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
