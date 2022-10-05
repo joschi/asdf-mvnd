@@ -49,8 +49,8 @@ installer() {
     else
       curl -Lo "$zip_path" "$(github_download_url "$version" "${platform}" "${architecture}")" || fail "could not download mvnd archive"
     fi
-    unzip -q "$zip_path" || fail "failed to extract mvnd archive"
-    mv "mvnd-${version}-${platform}-${architecture}"/* "$install_path" || fail "failed to move mvnd to $install_path"
+    unzip -q "$zip_path" -d "${tmp_download_dir}" || fail "failed to extract mvnd archive"
+    mv "${tmp_download_dir}/maven-mvnd-${version}-${platform}-${architecture}"/* "$install_path" || fail "failed to move mvnd to $install_path"
     rm -rf "$zip_path"
   ) || (rm -rf "$install_path"; exit 1)
 }
