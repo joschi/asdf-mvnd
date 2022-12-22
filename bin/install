@@ -16,6 +16,7 @@ installer() {
     exit 1
   fi
 
+  local artifact_name=$(artifact_name "$version")
   local platform
   case "$OSTYPE" in
     darwin*) platform="darwin" ;;
@@ -27,12 +28,14 @@ installer() {
   case "$(uname -m)" in
     x86_64) architecture="amd64" ;;
     arm64) 
-      # Fallback to emulation via Rosetta on M1 Macs
       if [[ "$platform" = "darwin" ]]; then
-        architecture="amd64"
-        warn "Falling back to use x86_64 binary"
+        architecture="aarch64"
+        if ! curl --silent --fail -IL "$(github_download_url "$artifact_name" "$version" "$platform" "$architecture")" > /dev/null ; then
+          architecture="amd64"
+          warn "Falling back to use x86_64 binary on $platform"
+        fi
       else
-        fail "Unsupported architecture"
+        fail "Unsupported architecture on $platform"
       fi
     ;;
     *) fail "Unsupported architecture" ;;
@@ -44,10 +47,10 @@ installer() {
     set -e
 
     local zip_path="$tmp_download_dir/mvnd-${version}.zip"
-    if curl --silent --fail -IL "$(apache_download_url "$version" "${platform}" "${architecture}")" > /dev/null ; then
-      curl -Lo "$zip_path" "$(apache_download_url "$version" "${platform}" "${architecture}")" || fail "could not download mvnd archive"
+    if curl --silent --fail -IL "$(apache_download_url "$artifact_name" "$version" "${platform}" "${architecture}")" > /dev/null ; then
+      curl -Lo "$zip_path" "$(apache_download_url "$artifact_name" "$version" "${platform}" "${architecture}")" || fail "could not download mvnd archive"
     else
-      curl -Lo "$zip_path" "$(github_download_url "$version" "${platform}" "${architecture}")" || fail "could not download mvnd archive"
+      curl -Lo "$zip_path" "$(github_download_url "$artifact_name" "$version" "${platform}" "${architecture}")" || fail "could not download mvnd archive"
     fi
     unzip -q "$zip_path" -d "${tmp_download_dir}" || fail "failed to extract mvnd archive"
     mv "${tmp_download_dir}/$(directory_name "$version" "${platform}" "${architecture}")-${version}-${platform}-${architecture}"/* "$install_path" ||
@@ -57,17 +60,29 @@ installer() {
 }
 
 github_download_url() {
-  local version=$1
-  local platform=$2
-  local architecture=$3
-  echo "https://github.com/mvndaemon/mvnd/releases/download/${version}/mvnd-${version}-${platform}-${architecture}.zip"
+  local artifact_name=$1
+  local version=$2
+  local platform=$3
+  local architecture=$4
+  echo "https://github.com/apache/maven-mvnd/releases/download/${version}/${artifact_name}-${version}-${platform}-${architecture}.zip"
 }
 
 apache_download_url() {
+  local artifact_name=$1
+  local version=$2
+  local platform=$3
+  local architecture=$4
+  echo "https://downloads.apache.org/maven/mvnd/${version}/${artifact_name}-${version}-${platform}-${architecture}.zip"
+}
+
+artifact_name() {
   local version=$1
   local platform=$2
   local architecture=$3
-  echo "https://downloads.apache.org/maven/mvnd/${version}/maven-mvnd-${version}-${platform}-${architecture}.zip"
+  case "${version}" in
+    0.[0-7]*) echo 'mvnd' ;;
+    *) echo 'maven-mvnd' ;;
+  esac
 }
 
 directory_name() {
