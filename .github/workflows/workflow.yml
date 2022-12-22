@@ -47,5 +47,21 @@ jobs:
         uses: asdf-vm/actions/plugin-test@v1
         with:
           command: mvnd -v
+          # First release with support for Apple M1/M2
+          version: 0.8.2
+        env:
+          GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: asdf_plugin_test
+        uses: asdf-vm/actions/plugin-test@v1
+        with:
+          command: mvnd -v
+          # Unreleased milestone on GitHub
+          version: 1.0.0-m1
+        env:
+          GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: asdf_plugin_test
+        uses: asdf-vm/actions/plugin-test@v1
+        with:
+          command: mvnd -v
         env:
           GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
