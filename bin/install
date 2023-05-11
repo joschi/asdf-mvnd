@@ -27,7 +27,7 @@ installer() {
   local architecture
   case "$(uname -m)" in
     x86_64) architecture="amd64" ;;
-    arm64) 
+    arm64)
       if [[ "$platform" = "darwin" ]]; then
         architecture="aarch64"
         if ! curl --silent --fail -IL "$(github_download_url "$artifact_name" "$version" "$platform" "$architecture")" > /dev/null ; then
@@ -64,7 +64,16 @@ github_download_url() {
   local version=$2
   local platform=$3
   local architecture=$4
-  echo "https://github.com/apache/maven-mvnd/releases/download/${version}/${artifact_name}-${version}-${platform}-${architecture}.zip"
+
+  readonly releases_path="https://api.github.com/repos/apache/maven-mvnd/releases"
+  cmd="curl -Ls"
+  if [ -n "$GITHUB_API_TOKEN" ]; then
+    cmd="$cmd -H 'Authorization: token $GITHUB_API_TOKEN'"
+  fi
+  cmd="$cmd $releases_path"
+
+  eval "$cmd" | grep -oE '"browser_download_url" *: *"[^"]+\/'${artifact_name}'-'${version}'-'${platform}'-'${architecture}'\.zip"' |sed -E 's/"browser_download_url" *: *"(.*)"/\1/' | head -1
+
 }
 
 apache_download_url() {
